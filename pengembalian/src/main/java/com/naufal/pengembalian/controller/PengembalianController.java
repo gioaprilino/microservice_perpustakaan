@@ -62,11 +62,19 @@ public class PengembalianController {
     }
 
     @PostMapping
-    public PengembalianModel createPengembalian(@RequestBody PengembalianModel pengembalian) {
+    public ResponseEntity<?> createPengembalian(@RequestBody PengembalianModel pengembalian) {
         log.info("Request received", kv("action", "CREATE"), kv("peminjamanId", pengembalian.getPeminjamanId()));
-        PengembalianModel result = pengembalianService.createPengembalian(pengembalian);
-        log.info("Request completed", kv("action", "CREATE"), kv("status", "SUCCESS"), kv("id", result.getId()));
-        return result;
+        try {
+            PengembalianModel result = pengembalianService.createPengembalian(pengembalian);
+            log.info("Request completed", kv("action", "CREATE"), kv("status", "SUCCESS"), kv("id", result.getId()));
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            log.error("Request failed", kv("action", "CREATE"), kv("status", "BAD_REQUEST"), kv("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+             log.error("Request failed", kv("action", "CREATE"), kv("status", "INTERNAL_ERROR"), kv("error", e.getMessage()));
+            return ResponseEntity.internalServerError().body("An unexpected error occurred");
+        }
     }
 
     @PostMapping("/proses")

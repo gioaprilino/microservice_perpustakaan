@@ -39,8 +39,9 @@ public class GetPeminjamanWithDetailsQuery implements Query<List<ResponseTemplat
 class GetPeminjamanWithDetailsHandler implements QueryHandler<GetPeminjamanWithDetailsQuery, List<ResponseTemplate>> {
 
     // Direct URLs for local development
-    private static final String ANGGOTA_URL = "http://localhost:8081/api/anggota/";
-    private static final String BUKU_URL = "http://localhost:8082/api/buku/";
+    // URLs for Docker environment
+    private static final String ANGGOTA_URL = "http://anggota-service:8081/api/anggota/";
+    private static final String BUKU_URL = "http://buku-service:8082/api/buku/";
 
     @Autowired
     private PeminjamanRepository peminjamanRepository;
