@@ -58,36 +58,42 @@ public class PengembalianService {
         Buku buku = null;
 
         // Jika peminjamanId ada, fetch data peminjaman dan hitung denda otomatis
+        // Jika peminjamanId ada, fetch data peminjaman dan hitung denda otomatis
         if (pengembalian.getPeminjamanId() != null) {
             try {
-                ServiceInstance peminjamanInstance = discoveryClient.getInstances("PEMINJAMAN").get(0);
+                // Use strict validation with direct URL for reliability
                 peminjaman = restTemplate.getForObject(
-                        peminjamanInstance.getUri() + "/api/peminjaman/" + pengembalian.getPeminjamanId(),
+                        "http://peminjaman-service:8083/api/peminjaman/" + pengembalian.getPeminjamanId(),
                         Peminjaman.class);
-
-                if (peminjaman != null) {
-                    // Gunakan tanggal_dikembalikan dari input, jika null gunakan hari ini
-                    LocalDate tanggalKembaliAktual = pengembalian.getTanggal_dikembalikan();
-                    if (tanggalKembaliAktual == null) {
-                        tanggalKembaliAktual = LocalDate.now();
-                        pengembalian.setTanggal_dikembalikan(tanggalKembaliAktual);
-                    }
-
-                    // Hitung keterlambatan dan denda
-                    int hariTerlambat = hitungKeterlambatan(peminjaman.getTanggal_kembali(), tanggalKembaliAktual);
-                    double denda = hitungDenda(hariTerlambat);
-
-                    pengembalian.setTerlambat(hariTerlambat);
-                    pengembalian.setDenda(denda);
-
-                    // Fetch data anggota dan buku untuk notifikasi
-                    anggota = fetchAnggota(peminjaman.getAnggotaId());
-                    buku = fetchBuku(peminjaman.getBukuId());
+                
+                if (peminjaman == null) {
+                    throw new IllegalArgumentException("Peminjaman ID " + pengembalian.getPeminjamanId() + " not found");
                 }
+
+                // Gunakan tanggal_dikembalikan dari input, jika null gunakan hari ini
+                LocalDate tanggalKembaliAktual = pengembalian.getTanggal_dikembalikan();
+                if (tanggalKembaliAktual == null) {
+                    tanggalKembaliAktual = LocalDate.now();
+                    pengembalian.setTanggal_dikembalikan(tanggalKembaliAktual);
+                }
+
+                // Hitung keterlambatan dan denda
+                int hariTerlambat = hitungKeterlambatan(peminjaman.getTanggal_kembali(), tanggalKembaliAktual);
+                double denda = hitungDenda(hariTerlambat);
+
+                pengembalian.setTerlambat(hariTerlambat);
+                pengembalian.setDenda(denda);
+
+                // Fetch data anggota dan buku untuk notifikasi
+                anggota = fetchAnggota(peminjaman.getAnggotaId());
+                buku = fetchBuku(peminjaman.getBukuId());
+
             } catch (Exception e) {
-                // Jika gagal fetch, tetap simpan tanpa perhitungan
-                log.error("Failed to fetch peminjaman data: {}", e.getMessage());
+                // Throw exception to be handled by controller
+                throw new IllegalArgumentException("Failed to validate Peminjaman: " + e.getMessage());
             }
+        } else {
+             throw new IllegalArgumentException("Peminjaman ID is required");
         }
 
         // Simpan pengembalian ke database

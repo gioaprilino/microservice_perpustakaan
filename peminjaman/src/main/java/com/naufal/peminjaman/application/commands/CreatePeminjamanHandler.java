@@ -40,7 +40,21 @@ public class CreatePeminjamanHandler implements CommandHandler<CreatePeminjamanC
     @Override
     public CommandResult handle(CreatePeminjamanCommand command) {
         try {
-            // 1. Create entity from command (Rich Domain approach)
+            // 1. Validate Anggota exists
+            try {
+                restTemplate.getForObject("http://anggota-service:8081/api/anggota/" + command.getAnggotaId(), Anggota.class);
+            } catch (Exception e) {
+                return CommandResult.failure("Anggota with ID " + command.getAnggotaId() + " not found.");
+            }
+
+            // 2. Validate Buku exists
+            try {
+                restTemplate.getForObject("http://buku-service:8082/api/buku/" + command.getBukuId(), Buku.class);
+            } catch (Exception e) {
+                return CommandResult.failure("Buku with ID " + command.getBukuId() + " not found.");
+            }
+
+            // 3. Create entity from command (Rich Domain approach)
             PeminjamanModel peminjaman = PeminjamanModel.create(
                     command.getAnggotaId(),
                     command.getBukuId(),
