@@ -25,10 +25,9 @@ pipeline {
         
         stage('Test Anggota Service') {
             steps {
-                echo 'Testing Anggota Service...'
-                dir('anggota') {
-                    sh 'mvn test'
-                }
+        sh 'mkdir -p /var/lib/jenkins/app/data'
+        sh 'chown -R jenkins:jenkins /var/lib/jenkins/app'
+        sh 'mvn test'
             }
         }
         
