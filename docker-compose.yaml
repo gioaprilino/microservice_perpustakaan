@@ -264,13 +264,18 @@ services:
       - microservices-network
 
   # ELK Stack
-  elasticsearch:
+    elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
     container_name: elasticsearch
     environment:
       - node.name=elasticsearch
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - ELASTIC_PASSWORD=admin
     ports:
       - "9200:9200"
     volumes:
@@ -278,27 +283,32 @@ services:
     networks:
       - microservices-network
 
-  logstash:
+    logstash:
     image: docker.elastic.co/logstash/logstash:7.17.10
     container_name: logstash
     ports:
       - "5000:5000"
       - "9600:9600"
+    environment:
+      - LOG_LEVEL=info
     volumes:
       - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/logstash.yml:/usr/share/logstash/config/logstash.yml
     depends_on:
       - elasticsearch
     networks:
       - microservices-network
 
-  kibana:
+    kibana:
     image: docker.elastic.co/kibana/kibana:7.17.10
     container_name: kibana
     ports:
       - "5601:5601"
     environment:
-      ELASTICSEARCH_URL: http://elasticsearch:9200
       ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+      ELASTICSEARCH_USERNAME: elastic
+      ELASTICSEARCH_PASSWORD: admin
+      # XPACK_SECURITY_ENABLED: "true"
     depends_on:
       - elasticsearch
     networks:
